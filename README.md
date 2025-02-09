@@ -1,5 +1,10 @@
 # sign-language-detector-python
 
-Sign language detector with Python, OpenCV and Mediapipe !
+Project Computer Vision 
 
-[![Watch the video](https://img.youtube.com/vi/MJCSjXepaAM/0.jpg)](https://www.youtube.com/watch?v=MJCSjXepaAM)
+# Members
+- 65070135 ปัณณวิชญ์  ปานช้าง
+- 65070182 ภูวดล  ศรีพันนา
+- 65070238 สิริมงคล ทองขวัญใจ
+- 65070247 อติคุณ ปิดสาโย
+
