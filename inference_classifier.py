@@ -4,18 +4,22 @@ import mediapipe as mp
 import numpy as np
 import random
 import time
+import customtkinter as ctk
+from PIL import Image
+from customtkinter import CTkImage
+
 
 model_dict = pickle.load(open('./model.p', 'rb'))
 model = model_dict['model']
-
-cap = cv2.VideoCapture(0)
 
 # กำหนด Mediapipe
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
-
 hands = mp_hands.Hands(static_image_mode=True, min_detection_confidence=0.8)
+
+# Map Labels
+labels_dict = {0: 'A', 1: 'B', 2: 'L'}
 
 # คำที่ต้องพิมพ์
 words = ["BALL", "LBAB", "A", "B", "L", "LL"]
@@ -23,44 +27,63 @@ current_word = random.choice(words)  # สุ่มคำ
 typed_word = ""  # ตัวอักษรที่พิมพ์ไปแล้ว
 
 # จับเวลาการพิมพ์
-start_time = time.time()  # เริ่มจับเวลาตอนสุ่มคำใหม่
+start_time = time.time()
 elapsed_time = 0
 
 last_character = None
 frame_counter = 0
 typing_delay = 15
 
-labels_dict = {0: 'A', 1: 'B', 2: 'L'}
+# สร้าง GUI
+root = ctk.CTk()
+root.geometry("800x600")
+root.title("Sign Language Recognition")
 
-if not cap.isOpened():
-    print("Cannot open camera")
-    exit()
+lbl_video = ctk.CTkLabel(root)
+lbl_video.pack()
 
-while True:
-    data_aux = []
-    x_ = []
-    y_ = []
+lbl_result = ctk.CTkLabel(root, text="Prediction: ", font=("Arial", 24))
+lbl_result.pack(pady=10)
+
+lbl_word = ctk.CTkLabel(root, text=f"Word: {current_word}", font=("Arial", 20))
+lbl_word.pack()
+
+lbl_typed = ctk.CTkLabel(root, text=f"Your Input: {typed_word}", font=("Arial", 20))
+lbl_typed.pack()
+
+lbl_time = ctk.CTkLabel(root, text=f"Time: {elapsed_time:.2f} sec", font=("Arial", 18))
+lbl_time.pack()
+
+btn_exit = ctk.CTkButton(root, text="Exit", command=root.quit)
+btn_exit.pack(pady=10)
+
+# เปิดกล้อง
+cap = cv2.VideoCapture(0)
+
+
+def update_frame():
+    global typed_word, last_character, frame_counter, current_word, start_time, elapsed_time
 
     ret, frame = cap.read()
     if not ret:
-        print("Failed to grab frame")
-        break       
+        return
 
-    H, W, _ = frame.shape
-    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    img = Image.fromarray(frame)
+    img_ctk = CTkImage(light_image=img, dark_image=img, size=(640, 480))  # ✅ กำหนดขนาดให้เหมาะสม
 
-    # ประมวลผล Mediapipe
-    results = hands.process(frame_rgb)
+    lbl_video.configure(image=img_ctk)
+    lbl_video.imgtk = img_ctk  # ป้องกัน GC ลบรูป
+
+    # ✅ ประมวลผล Mediapipe
+    results = hands.process(frame)
     if results.multi_hand_landmarks:
-        hand_landmarks = results.multi_hand_landmarks[0]  # เลือกมือเดียว
+        hand_landmarks = results.multi_hand_landmarks[0]
+        mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
 
-        mp_drawing.draw_landmarks(
-            frame,
-            hand_landmarks,
-            mp_hands.HAND_CONNECTIONS,
-            mp_drawing_styles.get_default_hand_landmarks_style(),
-            mp_drawing_styles.get_default_hand_connections_style()
-        )
+        data_aux = []
+        x_ = []
+        y_ = []
 
         for i in range(len(hand_landmarks.landmark)):
             x = hand_landmarks.landmark[i].x
@@ -70,28 +93,16 @@ while True:
             x_.append(x)
             y_.append(y)
 
-        x1 = int(min(x_) * W) - 10
-        y1 = int(min(y_) * H) - 10
-        x2 = int(max(x_) * W) + 10
-        y2 = int(max(y_) * H) + 10
+        prediction = model.predict([np.asarray(data_aux)])
+        prob = model.predict_proba([np.asarray(data_aux)])
+        predicted_character = labels_dict.get(np.argmax(prob), "")
+        confidence_score = np.max(prob)
 
-        # คำนวณความแม่นยำ
-        predicted_character = ""
-        confidence_score = 0.0
+        lbl_result.configure(text=f"Prediction: {predicted_character} ({confidence_score * 100:.2f}%)")
 
-        prediction = model.predict([np.asarray(data_aux)])  # class ที่ทำนาย
-        prob = model.predict_proba([np.asarray(data_aux)])  # prob ของแต่ละ class
-        prediction = np.argmax(prob) 
-        confidence_score = np.max(prob) 
-
-        # แปลงโดยดึงค่ามาจาก labels_dict
-        predicted_character = labels_dict.get(prediction, "")
-        print(predicted_character)
-
-        # ตรวจสอบว่าตัวอักษรเป็นตัวถัดไปในคำที่กำลังพิมพ์
+        # ตรวจสอบว่าตัวอักษรถูกต้อง
         if predicted_character and confidence_score > 0.7:
-            if predicted_character == current_word[len(typed_word)]:
-                # ป้องกันการตรวจจับซ้ำ
+            if len(typed_word) < len(current_word) and predicted_character == current_word[len(typed_word)]:
                 if predicted_character != last_character:
                     frame_counter = 0
                     last_character = predicted_character
@@ -99,38 +110,30 @@ while True:
                     frame_counter += 1
 
                 if frame_counter >= typing_delay:
-                    typed_word += predicted_character  # เพิ่มตัวอักษรที่พิมพ์ไปแล้ว
+                    typed_word += predicted_character
                     frame_counter = 0
+                    lbl_typed.configure(text=f"Your Input: {typed_word}")
 
-        # ถ้าพิมพ์ครบทั้งคำแล้ว ให้สุ่มคำใหม่
+        # ถ้าพิมพ์ครบแล้วให้สุ่มคำใหม่
         if typed_word == current_word:
-            end_time = time.time()  # จับเวลาสิ้นสุด
-            elapsed_time = end_time - start_time  # คำนวณเวลาที่ใช้
-            print(f"คุณใช้เวลา {elapsed_time:.2f} วินาที ในการพิมพ์คำว่า {current_word}")
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            lbl_time.configure(text=f"Time: {elapsed_time:.2f} sec")
 
-            time.sleep(1)  # พัก 1 วินาที
+            time.sleep(1)
             current_word = random.choice(words)
             typed_word = ""
-            start_time = time.time()  # เริ่มจับเวลาใหม่
+            start_time = time.time()
+            lbl_word.configure(text=f"Word: {current_word}")
+            lbl_typed.configure(text="Your Input: ")
 
-        # แสดงคำที่ต้องพิมพ์
-        cv2.putText(frame, f"Word: {current_word}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 255), 3, cv2.LINE_AA)
+    lbl_video.after(10, update_frame)
 
-        # แสดงคำที่พิมพ์ได้
-        cv2.putText(frame, f"Your Input: {typed_word}", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3, cv2.LINE_AA)
 
-        # แสดงเวลาที่ใช้ในการพิมพ์
-        elapsed_display = f"Time: {elapsed_time:.2f} sec"
-        cv2.putText(frame, elapsed_display, (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 0, 255), 3, cv2.LINE_AA)
-
-        # วาดกรอบ check ความแม่นยำ
-        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 0), 4)
-        cv2.putText(frame, f'{predicted_character} ({confidence_score*100:.2f}%)', 
-                    (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 255), 3, cv2.LINE_AA)
-
-    cv2.imshow('Alpha Signing Test', frame)
-    if cv2.waitKey(1) & 0xFF == ord('e'):
-        break
+update_frame()
+root.mainloop()
 
 cap.release()
 cv2.destroyAllWindows()
+
+
