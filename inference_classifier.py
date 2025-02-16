@@ -63,7 +63,7 @@ btn_exit = ctk.CTkButton(root, text="Exit", command=root.quit)
 btn_exit.pack(pady=10)
 
 # เปิดกล้อง
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 
 def update_frame():
     global typed_word, last_character, frame_counter, current_word, start_time, elapsed_time, time_limit, score
