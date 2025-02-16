@@ -18,7 +18,7 @@ print("จำนวนตัวอย่างในแต่ละแบบ:", 
 
 x_train, x_test, y_train, y_test = train_test_split(data, labels, test_size=0.2, shuffle=True, stratify=labels)
 
-model = ExtraTreesClassifier()
+model = RandomForestClassifier(n_estimators=100, max_depth=10)
 
 model.fit(x_train, y_train)
 

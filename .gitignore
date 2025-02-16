@@ -1,2 +1,5 @@
+.DS_Store
 /.venv
 License
+__pycache__/
+*/__pycache__/
