@@ -29,6 +29,8 @@ typed_word = ""  # ตัวอักษรที่พิมพ์ไปแล�
 # จับเวลาการพิมพ์
 start_time = time.time()
 elapsed_time = 0
+time_limit = 3  # ตั้งเวลานับถอยหลัง 3 วินาที
+score = 0  # คะแนนเริ่มต้น
 
 last_character = None
 frame_counter = 0
@@ -36,7 +38,7 @@ typing_delay = 15
 
 # สร้าง GUI
 root = ctk.CTk()
-root.geometry("800x600")
+root.geometry("1000x700")
 root.title("Sign Language Recognition")
 
 lbl_video = ctk.CTkLabel(root)
@@ -54,15 +56,17 @@ lbl_typed.pack()
 lbl_time = ctk.CTkLabel(root, text=f"Time: {elapsed_time:.2f} sec", font=("Arial", 18))
 lbl_time.pack()
 
+lbl_score = ctk.CTkLabel(root, text=f"Score: {score}", font=("Arial", 18))
+lbl_score.pack()
+
 btn_exit = ctk.CTkButton(root, text="Exit", command=root.quit)
 btn_exit.pack(pady=10)
 
 # เปิดกล้อง
 cap = cv2.VideoCapture(0)
 
-
 def update_frame():
-    global typed_word, last_character, frame_counter, current_word, start_time, elapsed_time
+    global typed_word, last_character, frame_counter, current_word, start_time, elapsed_time, time_limit, score
 
     ret, frame = cap.read()
     if not ret:
@@ -101,7 +105,7 @@ def update_frame():
         lbl_result.configure(text=f"Prediction: {predicted_character} ({confidence_score * 100:.2f}%)")
 
         # ตรวจสอบว่าตัวอักษรถูกต้อง
-        if predicted_character and confidence_score > 0.7:
+        if predicted_character and confidence_score > 0.5:
             if len(typed_word) < len(current_word) and predicted_character == current_word[len(typed_word)]:
                 if predicted_character != last_character:
                     frame_counter = 0
@@ -120,6 +124,10 @@ def update_frame():
             elapsed_time = end_time - start_time
             lbl_time.configure(text=f"Time: {elapsed_time:.2f} sec")
 
+            if elapsed_time <= time_limit:
+                score += 1
+                lbl_score.configure(text=f"Score: {score}")
+
             time.sleep(1)
             current_word = random.choice(words)
             typed_word = ""
@@ -127,13 +135,25 @@ def update_frame():
             lbl_word.configure(text=f"Word: {current_word}")
             lbl_typed.configure(text="Your Input: ")
 
-    lbl_video.after(10, update_frame)
+    # คำนวณเวลานับถอยหลัง
+    remaining_time = time_limit - (time.time() - start_time)
+    lbl_time.configure(text=f"Time: {max(0, remaining_time):.2f} sec")
 
+    if remaining_time <= 0:
+        # หมดเวลา, ตรวจสอบคำที่พิมพ์
+        if typed_word == current_word:
+            score += 1
+            lbl_score.configure(text=f"Score: {score}")
+        current_word = random.choice(words)
+        typed_word = ""
+        start_time = time.time()
+        lbl_word.configure(text=f"Word: {current_word}")
+        lbl_typed.configure(text="Your Input: ")
+
+    lbl_video.after(10, update_frame)
 
 update_frame()
 root.mainloop()
 
 cap.release()
 cv2.destroyAllWindows()
-
-
