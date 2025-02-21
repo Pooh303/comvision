@@ -9,9 +9,12 @@ class SignLanguageView:
         self.controller = controller
         self.root.geometry("1000x700")
         self.root.title("Sign Language Recognition")
+        
+        ctk.set_appearance_mode("dark")
+        ctk.set_default_color_theme("blue")
 
-        self.main_frame = ctk.CTkFrame(self.root)
-        self.main_frame.pack(expand=True, fill="both")
+        self.main_frame = ctk.CTkFrame(self.root, corner_radius=15)
+        self.main_frame.pack(expand=True, fill="both", padx=20, pady=20)
 
         # แสดงหน้า Welcome ก่อน
         self.show_welcome_screen()
@@ -35,32 +38,11 @@ class SignLanguageView:
         back_button = ctk.CTkButton(self.main_frame, text="🔙 กลับหน้าหลัก", command=self.show_welcome_screen, font=("Arial", 24))
         back_button.grid(row=2, column=0, columnspan=5, pady=20, sticky="sw")
 
-        # สร้าง Label สำหรับแสดงภาพจากกล้อง
+
+        # สร้าง Label สำหรับแสดงภาพจากกล้อง (เริ่มต้นซ่อนไว้)
         self.video_frame = ctk.CTkLabel(self.main_frame)
-        self.video_frame.grid(row=4, column=0, columnspan=10, pady=20)
-
-        # สร้าง Label สำหรับแสดงรูป
-        self.image_label = ctk.CTkLabel(self.main_frame, text="", font=("Arial", 30, "bold"))
-        self.image_label.grid(row=2, column=1, columnspan=5, pady=20, sticky="e")
-
-        self.controller.start_video_capture_tutorial() # เริ่มจับภาพจากกล้อง
-
-    def show_image_for_letter(self, letter):
-        """ ฟังก์ชันที่แสดงภาพที่เกี่ยวข้องกับตัวอักษร """
-        # โหลดรูปภาพจากไฟล์ที่เกี่ยวข้อง
-        image_path = f"./images/{letter.lower()}.png"  # กำหนดเส้นทางของไฟล์รูปภาพ
-
-        # ใช้ PIL ในการเปิดรูปภาพ
-        img = Image.open(image_path)
-        img = img.resize((100, 100))  # ปรับขนาดภาพให้พอดีกับ UI
-
-        # แปลงรูปภาพให้เป็น CTkImage สำหรับ CustomTkinter
-        img_ctk = CTkImage(img, size=(100, 100))  # ปรับขนาดภาพตามที่ต้องการ
-
-        # อัปเดต image_label ด้วย CTkImage ใหม่
-        self.image_label.configure(image=img_ctk)
-        self.image_label.image = img_ctk  # ต้องเก็บการอ้างอิงไว้ เพื่อไม่ให้ภาพถูกลบ
-
+        self.video_frame.grid(row=3, column=0, columnspan=5, pady=20)
+        self.controller.start_video_capture_tutorial()
 
     def clear_screen(self):
         """ ลบ widget ทั้งหมดใน main_frame """
@@ -74,14 +56,14 @@ class SignLanguageView:
         lbl_title = ctk.CTkLabel(self.main_frame, text="Sign Language Recognition", font=("Arial", 32, "bold"))
         lbl_title.grid(row=0, column=0, columnspan=3, pady=20)
 
-        btn_start = ctk.CTkButton(self.main_frame, text="Start Game", command=self.start_game)
+        btn_start = ctk.CTkButton(self.main_frame, text="🚀 Start Game", command=self.start_game)
         btn_start.grid(row=1, column=1, pady=10, padx=10)
 
-        btn_tutorial = ctk.CTkButton(self.main_frame, text="Tutorial", command=self.show_tutorial_screen)
+        btn_tutorial = ctk.CTkButton(self.main_frame, text="📖 Tutorial", command=self.show_tutorial_screen)
         btn_tutorial.grid(row=2, column=1, pady=10, padx=10)
 
-        btn_exit = ctk.CTkButton(self.main_frame, text="Exit", command=self.root.quit)
-        btn_exit.grid(row=3, column=1, pady=10, padx=10)
+        btn_exit = ctk.CTkButton(self.main_frame, text="❌ Exit", command=self.root.quit, font=("Arial", 24), fg_color="#f44336", width=200)
+        btn_exit.grid(row=3, column=1, pady=10)  #, padx=10
       
     def start_game(self):
         """ ซ่อนหน้า Welcome แล้วแสดงหน้าเกม """
@@ -93,26 +75,26 @@ class SignLanguageView:
         """ UI หลักของเกม """
         self.main_frame.pack_forget()  # ซ่อน main_frame เพื่อเคลียร์ UI หน้าเก่า
         
-        self.lbl_video = ctk.CTkLabel(self.root)
-        self.lbl_video.pack()
+        self.lbl_video = ctk.CTkLabel(self.root, text="", fg_color="black", corner_radius=10)
+        self.lbl_video.pack(pady=20)
 
         self.lbl_result = ctk.CTkLabel(self.root, text="Prediction: ", font=("Arial", 24))
         self.lbl_result.pack(pady=10)
 
-        self.lbl_word = ctk.CTkLabel(self.root, text="Word: ", font=("Arial", 20))
-        self.lbl_word.pack()
+        self.lbl_word = ctk.CTkLabel(self.root, text="Word: ", font=("Arial", 22))
+        self.lbl_word.pack(pady=5)
 
-        self.lbl_typed = ctk.CTkLabel(self.root, text="Your Input: ", font=("Arial", 20))
-        self.lbl_typed.pack()
+        self.lbl_typed = ctk.CTkLabel(self.root, text="Your Input: ", font=("Arial", 22))
+        self.lbl_typed.pack(pady=5)
 
-        self.lbl_time = ctk.CTkLabel(self.root, text="Time: ", font=("Arial", 18))
-        self.lbl_time.pack()
+        self.lbl_time = ctk.CTkLabel(self.root, text="Time: ", font=("Arial", 20))
+        self.lbl_time.pack(pady=5)
 
-        self.lbl_score = ctk.CTkLabel(self.root, text="Score: ", font=("Arial", 18))
-        self.lbl_score.pack()
+        self.lbl_score = ctk.CTkLabel(self.root, text="Score: ", font=("Arial", 20))
+        self.lbl_score.pack(pady=5)
 
-        self.btn_exit = ctk.CTkButton(self.root, text="Exit", command=self.root.quit)
-        self.btn_exit.pack(pady=10)
+        self.btn_exit = ctk.CTkButton(self.root, text="❌ Exit", command=self.root.quit, fg_color="#f44336", font=("Arial", 22))
+        self.btn_exit.pack(pady=20)
 
     def update_tutorial_frame(self, frame):
         img = Image.fromarray(frame)
@@ -127,11 +109,11 @@ class SignLanguageView:
         self.lbl_video.imgtk = img_ctk  # ป้องกัน garbage collection
 
     def update_labels(self, game_state, prediction_text):
-        self.lbl_word.configure(text=f"Word: {game_state['current_word']}")
-        self.lbl_typed.configure(text=f"Your Input: {game_state['typed_word']}")
-        self.lbl_time.configure(text=f"Time: {game_state['remaining_time']:.2f} sec")
-        self.lbl_score.configure(text=f"Score: {game_state['score']}")
-        self.lbl_result.configure(text=prediction_text)
+        self.lbl_word.configure(text=f"📌 Word: {game_state['current_word']}")
+        self.lbl_typed.configure(text=f"📝 Your Input: {game_state['typed_word']}")
+        self.lbl_time.configure(text=f"⏳ Time: {game_state['remaining_time']:.2f} sec")
+        self.lbl_score.configure(text=f"🏆 Score: {game_state['score']}")
+        self.lbl_result.configure(text=f"🔍 Prediction: {prediction_text}")
 
     def start(self):
         self.root.mainloop()
