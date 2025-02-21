@@ -63,7 +63,7 @@ btn_exit = ctk.CTkButton(root, text="Exit", command=root.quit)
 btn_exit.pack(pady=10)
 
 # เปิดกล้อง
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 
 def update_frame():
     global typed_word, last_character, frame_counter, current_word, start_time, elapsed_time, time_limit, score
@@ -78,7 +78,7 @@ def update_frame():
 
     lbl_video.configure(image=img_ctk)
     lbl_video.imgtk = img_ctk  # ป้องกัน GC ลบรูป
-
+    
     # ✅ ประมวลผล Mediapipe
     results = hands.process(frame)
     if results.multi_hand_landmarks:
@@ -96,7 +96,7 @@ def update_frame():
             data_aux.append(y)
             x_.append(x)
             y_.append(y)
-
+    
         prediction = model.predict([np.asarray(data_aux)])
         prob = model.predict_proba([np.asarray(data_aux)])
         predicted_character = labels_dict.get(np.argmax(prob), "")
