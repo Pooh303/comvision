@@ -1,7 +1,7 @@
 import customtkinter as ctk
 from PIL import Image
 from customtkinter import CTkImage
-
+from PIL import Image, ImageTk
 
 class SignLanguageView:
     def __init__(self, root, controller):
@@ -21,23 +21,46 @@ class SignLanguageView:
         self.clear_screen()
 
         game_label = ctk.CTkLabel(self.main_frame, text="🎯 ตัวอย่างอักษรในภาษามือ", font=("Arial", 30, "bold"))
-        game_label.grid(row=0, column=0, columnspan=5, pady=10)
+        game_label.grid(row=0, column=0, columnspan=10, pady=10)
 
         # สร้างปุ่ม A, B, C, D, E
-        letters = ["A", "B", "C", "D", "E"]
+        letters = [chr(i) for i in range(ord("A"), ord("Z") + 1)]  # สร้างอักษร A-Z
         for idx, letter in enumerate(letters):
-            btn = ctk.CTkButton(self.main_frame, text=letter, font=("Arial", 24), width=80, height=60)
-            btn.grid(row=1, column=idx, padx=5, pady=5)
+            row, col = divmod(idx, 10)  # คำนวณแถวและคอลัมน์
+            btn = ctk.CTkButton(self.main_frame, text=letter, font=("Arial", 24), width=80, height=60,
+                                command=lambda l=letter: self.show_image_for_letter(l))
+            btn.grid(row=row + 1, column=col, padx=5, pady=5)  # row+1 เพื่อหลีกเลี่ยงการชนกับ game_label
 
-        # ปุ่มกลับไปหน้าหลัก (แก้ไขการเรียกฟังก์ชัน)
+        # ปุ่มกลับไปหน้าหลัก
         back_button = ctk.CTkButton(self.main_frame, text="🔙 กลับหน้าหลัก", command=self.show_welcome_screen, font=("Arial", 24))
-        back_button.grid(row=2, column=0, columnspan=5, pady=20)
+        back_button.grid(row=2, column=0, columnspan=5, pady=20, sticky="sw")
 
-
-        # สร้าง Label สำหรับแสดงภาพจากกล้อง (เริ่มต้นซ่อนไว้)
+        # สร้าง Label สำหรับแสดงภาพจากกล้อง
         self.video_frame = ctk.CTkLabel(self.main_frame)
-        self.video_frame.grid(row=3, column=0, columnspan=5, pady=20)
-        self.controller.start_video_capture_tutorial()
+        self.video_frame.grid(row=4, column=0, columnspan=10, pady=20)
+
+        # สร้าง Label สำหรับแสดงรูป
+        self.image_label = ctk.CTkLabel(self.main_frame, text="", font=("Arial", 30, "bold"))
+        self.image_label.grid(row=2, column=1, columnspan=5, pady=20, sticky="e")
+
+        self.controller.start_video_capture_tutorial() # เริ่มจับภาพจากกล้อง
+
+    def show_image_for_letter(self, letter):
+        """ ฟังก์ชันที่แสดงภาพที่เกี่ยวข้องกับตัวอักษร """
+        # โหลดรูปภาพจากไฟล์ที่เกี่ยวข้อง
+        image_path = f"./images/{letter.lower()}.png"  # กำหนดเส้นทางของไฟล์รูปภาพ
+
+        # ใช้ PIL ในการเปิดรูปภาพ
+        img = Image.open(image_path)
+        img = img.resize((100, 100))  # ปรับขนาดภาพให้พอดีกับ UI
+
+        # แปลงรูปภาพให้เป็น CTkImage สำหรับ CustomTkinter
+        img_ctk = CTkImage(img, size=(100, 100))  # ปรับขนาดภาพตามที่ต้องการ
+
+        # อัปเดต image_label ด้วย CTkImage ใหม่
+        self.image_label.configure(image=img_ctk)
+        self.image_label.image = img_ctk  # ต้องเก็บการอ้างอิงไว้ เพื่อไม่ให้ภาพถูกลบ
+
 
     def clear_screen(self):
         """ ลบ widget ทั้งหมดใน main_frame """
