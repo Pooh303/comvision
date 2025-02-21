@@ -9,7 +9,7 @@ class SignLanguageView:
         self.controller = controller
         self.root.geometry("1000x700")
         self.root.title("Sign Language Recognition")
-        
+
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
 
@@ -20,27 +20,48 @@ class SignLanguageView:
         self.show_welcome_screen()
 
     def show_tutorial_screen(self):
-        """ แสดงหน้า Tutorial """
+        """ 🎯 แสดงหน้า Tutorial (ใช้ ComboBox แทนปุ่ม A-Z) """
         self.clear_screen()
 
-        game_label = ctk.CTkLabel(self.main_frame, text="🎯 ตัวอย่างอักษรในภาษามือ", font=("Arial", 30, "bold"))
-        game_label.grid(row=0, column=0, columnspan=5, pady=10)
+        max_columns = 5  # ใช้กำหนด Grid Layout
+        for i in range(max_columns):
+            self.main_frame.grid_columnconfigure(i, weight=1)
 
-        # สร้างปุ่ม A, B, C, D, E
-        letters = ["A", "B", "C", "D", "E"]
-        for idx, letter in enumerate(letters):
-            btn = ctk.CTkButton(self.main_frame, text=letter, font=("Arial", 24), width=80, height=60)
-            btn.grid(row=1, column=idx, padx=5, pady=5)
+        # ✅ ปุ่มกลับหน้าหลัก (ขวาบน)
+        back_button = ctk.CTkButton(self.main_frame, text="🔙 กลับหน้าหลัก",
+                                    command=self.show_welcome_screen, font=("Arial", 16),
+                                    fg_color="#ff5722", width=100, height=40)
+        back_button.grid(row=0, column=max_columns - 1, padx=10, pady=10, sticky="ne")  # อยู่ขวาบน
 
-        # ปุ่มกลับไปหน้าหลัก (แก้ไขการเรียกฟังก์ชัน)
-        back_button = ctk.CTkButton(self.main_frame, text="🔙 กลับหน้าหลัก", command=self.show_welcome_screen, font=("Arial", 24))
-        back_button.grid(row=2, column=0, columnspan=5, pady=20)
+        # ✅ หัวข้อใหญ่อยู่ตรงกลาง
+        game_label = ctk.CTkLabel(self.main_frame, text="🎯 ตัวอย่างอักษรในภาษามือ", font=("Arial", 22, "bold"))
+        game_label.grid(row=1, column=0, columnspan=max_columns, pady=10, sticky="n")
 
+        # ✅ **Video อยู่ด้านบนสุด ใต้หัวข้อ**
+        self.video_frame = ctk.CTkLabel(self.main_frame, text="", fg_color="black", corner_radius=10,
+                                        width=640, height=480)
+        self.video_frame.grid(row=2, column=0, columnspan=max_columns, pady=20, sticky="n")
 
-        # สร้าง Label สำหรับแสดงภาพจากกล้อง (เริ่มต้นซ่อนไว้)
-        self.video_frame = ctk.CTkLabel(self.main_frame, text="", fg_color="black", corner_radius=10)
-        self.video_frame.grid(row=3, column=0, columnspan=5, pady=20)
+        # ✅ **เปลี่ยนจากปุ่ม A-Z เป็น ComboBox**
+        self.letter_combo = ctk.CTkComboBox(self.main_frame, values=[chr(i) for i in range(65, 91)], 
+                                            font=("Arial", 16), width=150, height=40)
+        self.letter_combo.set("เลือกตัวอักษร")  # ค่าเริ่มต้น
+        self.letter_combo.grid(row=3, column=0, columnspan=max_columns, pady=10, sticky="n")
+
+        # ✅ ปรับ Layout ให้อยู่กลาง
+        self.main_frame.grid_rowconfigure(4, weight=1)
+
+        # ✅ เชื่อม Event เมื่อเลือกตัวอักษรจาก ComboBox
+        self.letter_combo.bind("<<ComboboxSelected>>", self.on_letter_selected)
         self.controller.start_video_capture_tutorial()
+    def on_letter_selected(self, event):
+        """ อัปเดตค่าเมื่อเลือกตัวอักษร """
+        selected_letter = self.letter_combo.get()
+        print(f"เลือกตัวอักษร: {selected_letter}")
+
+
+
+
 
     def clear_screen(self):
         """ ลบ widget ทั้งหมดใน main_frame """
@@ -60,19 +81,20 @@ class SignLanguageView:
         btn_tutorial = ctk.CTkButton(self.main_frame, text="📖 Tutorial", command=self.show_tutorial_screen)
         btn_tutorial.grid(row=2, column=1, pady=10, padx=10)
 
-        btn_exit = ctk.CTkButton(self.main_frame, text="❌ Exit", command=self.root.quit, font=("Arial", 24), fg_color="#f44336", width=200)
-        btn_exit.grid(row=3, column=1, pady=10)  #, padx=10
-      
+        btn_exit = ctk.CTkButton(self.main_frame, text="❌ Exit", command=self.root.quit,
+                                 font=("Arial", 24), fg_color="#f44336", width=200)
+        btn_exit.grid(row=3, column=1, pady=10)
+
     def start_game(self):
         """ ซ่อนหน้า Welcome แล้วแสดงหน้าเกม """
-        self.clear_screen()  # ใช้ clear_screen() แทนการซ่อน frame
+        self.clear_screen()
         self.show_game_screen()
-        self.controller.start_video_capture()  # เริ่มกล้อง
+        self.controller.start_video_capture()
 
     def show_game_screen(self):
         """ UI หลักของเกม """
-        self.main_frame.pack_forget()  # ซ่อน main_frame เพื่อเคลียร์ UI หน้าเก่า
-        
+        self.main_frame.pack_forget()
+
         self.lbl_video = ctk.CTkLabel(self.root, text="", fg_color="black", corner_radius=10)
         self.lbl_video.pack(pady=20)
 
@@ -91,7 +113,8 @@ class SignLanguageView:
         self.lbl_score = ctk.CTkLabel(self.root, text="Score: ", font=("Arial", 20))
         self.lbl_score.pack(pady=5)
 
-        self.btn_exit = ctk.CTkButton(self.root, text="❌ Exit", command=self.root.quit, fg_color="#f44336", font=("Arial", 22))
+        self.btn_exit = ctk.CTkButton(self.root, text="❌ Exit", command=self.root.quit,
+                                     fg_color="#f44336", font=("Arial", 22))
         self.btn_exit.pack(pady=20)
 
     def update_tutorial_frame(self, frame):
@@ -107,6 +130,7 @@ class SignLanguageView:
         self.lbl_video.imgtk = img_ctk  # ป้องกัน garbage collection
 
     def update_labels(self, game_state, prediction_text):
+        """ อัปเดต UI ด้วยข้อมูลใหม่ """
         self.lbl_word.configure(text=f"📌 Word: {game_state['current_word']}")
         self.lbl_typed.configure(text=f"📝 Your Input: {game_state['typed_word']}")
         self.lbl_time.configure(text=f"⏳ Time: {game_state['remaining_time']:.2f} sec")
