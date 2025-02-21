@@ -11,9 +11,33 @@ class SignLanguageController:
         self.view = SignLanguageView(self.root, self)
         self.cap = None
 
+    def start_video_capture_tutorial(self):
+        """ เริ่มต้นเปิดกล้อง """
+        self.cap = cv2.VideoCapture(0)
+        self.update_frame_tutorial()
+
+    def update_frame_tutorial(self):
+
+        if self.cap is None:
+            return
+
+        ret, frame = self.cap.read()
+        if not ret:
+            return
+
+        # Convert to RGB
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        # Predict hand sign
+        predicted_character, confidence_score, results, hand_landmarks = self.model.predict(frame)
+
+        # Convert to CTkImage
+        self.view.update_tutorial_frame(frame_rgb)
+        self.view.video_frame.after(10, self.update_frame_tutorial)
+    
     def start_video_capture(self):
         """ เริ่มต้นเปิดกล้อง """
-        self.cap = cv2.VideoCapture(1)
+        self.cap = cv2.VideoCapture(0)
         self.update_frame()
 
     def update_frame(self):
