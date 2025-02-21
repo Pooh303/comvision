@@ -41,8 +41,9 @@ root = ctk.CTk()
 root.geometry("1000x700")
 root.title("Sign Language Recognition")
 
-lbl_video = ctk.CTkLabel(root)
+lbl_video = ctk.CTkLabel(root, text="")  
 lbl_video.pack()
+
 
 lbl_result = ctk.CTkLabel(root, text="Prediction: ", font=("Arial", 24))
 lbl_result.pack(pady=10)
