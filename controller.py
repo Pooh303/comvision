@@ -1,12 +1,15 @@
 import cv2
 from model import SignLanguageModel
+from model2 import SignLanguageModel2
 from view import SignLanguageView
 import customtkinter as ctk
-
+import cv2
+import mediapipe as mp
 
 class SignLanguageController:
     def __init__(self):
         self.model = SignLanguageModel()
+        self.model2 = SignLanguageModel2()
         self.root = ctk.CTk()
         self.view = SignLanguageView(self.root, self)
         self.cap = None
@@ -16,8 +19,9 @@ class SignLanguageController:
         self.cap = cv2.VideoCapture(0)
         self.update_frame_tutorial()
 
-    def update_frame_tutorial(self):
+    
 
+    def update_frame_tutorial(self):
         if self.cap is None:
             return
 
@@ -25,16 +29,20 @@ class SignLanguageController:
         if not ret:
             return
 
-        # Convert to RGB
+        # (ถ้าต้องการแปลงเป็น RGB สามารถทำได้ แต่ในกรณีนี้เราใช้ cv2.imshow หรืออัปเดต UI ที่รองรับ BGR ก็ได้)
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-        # Predict hand sign
-        predicted_character, confidence_score, results, hand_landmarks = self.model.predict(frame)
+        # เรียกใช้ฟังก์ชัน predict_and_draw จากโมเดล
+        # สมมติว่า self.model เป็น instance ของ SignLanguageModel2
+        frame = self.model2.predict_and_draw(frame_rgb)
 
-        # Convert to CTkImage
-        self.view.update_tutorial_frame(frame_rgb)
+        # อัปเดตเฟรมใน UI (ในที่นี้ใช้ self.view.update_tutorial_frame)
+        self.view.update_tutorial_frame(frame)
+
+        # เรียกฟังก์ชันซ้ำหลัง 10 มิลลิวินาที
         self.view.video_frame.after(10, self.update_frame_tutorial)
-    
+
+
     def start_video_capture(self):
         """ เริ่มต้นเปิดกล้อง """
         self.cap = cv2.VideoCapture(0)
