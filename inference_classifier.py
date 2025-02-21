@@ -8,7 +8,6 @@ import customtkinter as ctk
 from PIL import Image
 from customtkinter import CTkImage
 
-
 model_dict = pickle.load(open('./model.p', 'rb'))
 model = model_dict['model']
 
@@ -22,19 +21,21 @@ hands = mp_hands.Hands(static_image_mode=True, min_detection_confidence=0.8)
 labels_dict = {0: 'A', 1: 'B', 2: 'L'}
 
 # คำที่ต้องพิมพ์
-words = ["BALL", "LBAB", "A", "B", "L", "LL"]
+words = ["BALL", "LBAB"]
 current_word = random.choice(words)  # สุ่มคำ
 typed_word = ""  # ตัวอักษรที่พิมพ์ไปแล้ว
 
 # จับเวลาการพิมพ์
 start_time = time.time()
-elapsed_time = 0
-time_limit = 3  # ตั้งเวลานับถอยหลัง 3 วินาที
+time_limit = 10  # ตั้งเวลานับถอยหลัง 5 วินาที
 score = 0  # คะแนนเริ่มต้น
 
 last_character = None
 frame_counter = 0
 typing_delay = 15
+
+# เปิดกล้อง
+cap = cv2.VideoCapture(0)
 
 # สร้าง GUI
 root = ctk.CTk()
@@ -50,10 +51,10 @@ lbl_result.pack(pady=10)
 lbl_word = ctk.CTkLabel(root, text=f"Word: {current_word}", font=("Arial", 20))
 lbl_word.pack()
 
-lbl_typed = ctk.CTkLabel(root, text=f"Your Input: {typed_word}", font=("Arial", 20))
+lbl_typed = ctk.CTkTextbox(root, height=30, width=300, font=("Arial", 20))
 lbl_typed.pack()
 
-lbl_time = ctk.CTkLabel(root, text=f"Time: {elapsed_time:.2f} sec", font=("Arial", 18))
+lbl_time = ctk.CTkLabel(root, text=f"Time: {time_limit:.2f} sec", font=("Arial", 18))
 lbl_time.pack()
 
 lbl_score = ctk.CTkLabel(root, text=f"Score: {score}", font=("Arial", 18))
@@ -62,11 +63,18 @@ lbl_score.pack()
 btn_exit = ctk.CTkButton(root, text="Exit", command=root.quit)
 btn_exit.pack(pady=10)
 
-# เปิดกล้อง
-cap = cv2.VideoCapture(1)
+def update_typed_text():
+    """อัปเดตสีตัวอักษรที่พิมพ์ไปแล้วเป็นสีเขียว"""
+    lbl_typed.delete("1.0", "end")  # เคลียร์ข้อความเก่า
+    for i, char in enumerate(current_word):
+        if i < len(typed_word):
+            lbl_typed.insert("end", char, "correct")  # ใส่สีเขียว
+        else:
+            lbl_typed.insert("end", char)  # สีปกติ
+    lbl_typed.tag_config("correct", foreground="green")  # กำหนดสีเขียว
 
 def update_frame():
-    global typed_word, last_character, frame_counter, current_word, start_time, elapsed_time, time_limit, score
+    global typed_word, last_character, frame_counter, current_word, start_time, score
 
     ret, frame = cap.read()
     if not ret:
@@ -74,28 +82,18 @@ def update_frame():
 
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     img = Image.fromarray(frame)
-    img_ctk = CTkImage(light_image=img, dark_image=img, size=(640, 480))  # ✅ กำหนดขนาดให้เหมาะสม
-
+    img_ctk = CTkImage(light_image=img, dark_image=img, size=(640, 480))
     lbl_video.configure(image=img_ctk)
     lbl_video.imgtk = img_ctk  # ป้องกัน GC ลบรูป
 
-    # ✅ ประมวลผล Mediapipe
     results = hands.process(frame)
     if results.multi_hand_landmarks:
         hand_landmarks = results.multi_hand_landmarks[0]
         mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
 
         data_aux = []
-        x_ = []
-        y_ = []
-
-        for i in range(len(hand_landmarks.landmark)):
-            x = hand_landmarks.landmark[i].x
-            y = hand_landmarks.landmark[i].y
-            data_aux.append(x)
-            data_aux.append(y)
-            x_.append(x)
-            y_.append(y)
+        for landmark in hand_landmarks.landmark:
+            data_aux.extend([landmark.x, landmark.y])
 
         prediction = model.predict([np.asarray(data_aux)])
         prob = model.predict_proba([np.asarray(data_aux)])
@@ -116,12 +114,10 @@ def update_frame():
                 if frame_counter >= typing_delay:
                     typed_word += predicted_character
                     frame_counter = 0
-                    lbl_typed.configure(text=f"Your Input: {typed_word}")
+                    update_typed_text()
 
-        # ถ้าพิมพ์ครบแล้วให้สุ่มคำใหม่
         if typed_word == current_word:
-            end_time = time.time()
-            elapsed_time = end_time - start_time
+            elapsed_time = time.time() - start_time
             lbl_time.configure(text=f"Time: {elapsed_time:.2f} sec")
 
             if elapsed_time <= time_limit:
@@ -133,22 +129,17 @@ def update_frame():
             typed_word = ""
             start_time = time.time()
             lbl_word.configure(text=f"Word: {current_word}")
-            lbl_typed.configure(text="Your Input: ")
+            update_typed_text()
 
-    # คำนวณเวลานับถอยหลัง
     remaining_time = time_limit - (time.time() - start_time)
-    lbl_time.configure(text=f"Time: {max(0, remaining_time):.2f} sec")
+    lbl_time.configure(text=f"Time: {max(0, remaining_time):.0f} sec")
 
     if remaining_time <= 0:
-        # หมดเวลา, ตรวจสอบคำที่พิมพ์
-        if typed_word == current_word:
-            score += 1
-            lbl_score.configure(text=f"Score: {score}")
         current_word = random.choice(words)
         typed_word = ""
         start_time = time.time()
         lbl_word.configure(text=f"Word: {current_word}")
-        lbl_typed.configure(text="Your Input: ")
+        update_typed_text()
 
     lbl_video.after(10, update_frame)
 
