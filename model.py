@@ -1,4 +1,3 @@
-# model.py (Modified)
 import pickle
 import mediapipe as mp
 import numpy as np
