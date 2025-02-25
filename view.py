@@ -60,9 +60,6 @@ class SignLanguageView:
         print(f"เลือกตัวอักษร: {selected_letter}")
 
 
-
-
-
     def clear_screen(self):
         """ ลบ widget ทั้งหมดใน main_frame """
         for widget in self.main_frame.winfo_children():
