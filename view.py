@@ -109,7 +109,7 @@ class SignLanguageView:
         self.lbl_score = ctk.CTkLabel(right_frame, text="Score: ", font=("Arial", 18))
         self.lbl_score.pack(pady=10)
 
-        self.btn_exit = ctk.CTkButton(right_frame, text="❌ Exit", command=self.root.quit,
+        self.btn_exit = ctk.CTkButton(right_frame, text="❌ Exit", command=self.show_welcome_screen,
                                       fg_color="#f44336", font=("Arial", 18), width=200)
         self.btn_exit.pack(pady=20)
 
