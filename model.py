@@ -4,13 +4,15 @@ import numpy as np
 import random
 import time
 import cv2
+import string
 
 
 class SignLanguageModel:
     def __init__(self, model_path='./model.p', words_file='words.txt'):
         model_dict = pickle.load(open(model_path, 'rb'))
         self.model = model_dict['model']
-        self.labels_dict = {0: 'A', 1: 'B', 2: 'L'}
+        # self.labels_dict = {0: 'A', 1: 'B', 2: 'L'}
+        self.labels_dict = {i: letter for i, letter in enumerate(string.ascii_uppercase)}
         self.words = self.load_words(words_file)  # Load words from file
         self.current_word = random.choice(self.words)
         self.typed_word = ""

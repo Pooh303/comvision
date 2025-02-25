@@ -69,18 +69,28 @@ class SignLanguageView:
         """ สร้างหน้า Welcome ก่อนเริ่มเกม """
         self.clear_screen()
 
+        # Center the content
+        self.main_frame.columnconfigure(0, weight=1)
+
         lbl_title = ctk.CTkLabel(self.main_frame, text="Sign Language Recognition", font=("Arial", 32, "bold"))
-        lbl_title.grid(row=0, column=0, columnspan=3, pady=20)
+        lbl_title.grid(row=0, column=0, pady=20, sticky="nsew")
 
-        btn_start = ctk.CTkButton(self.main_frame, text="🚀 Start Game", command=self.start_game)
-        btn_start.grid(row=1, column=1, pady=10, padx=10)
+        btn_start = ctk.CTkButton(self.main_frame, text="🚀 Start Game", font=("Arial", 28, "bold"),command=self.start_game)
+        btn_start.grid(row=1, column=0, pady=10, padx=10, sticky="nsew")
 
-        btn_tutorial = ctk.CTkButton(self.main_frame, text="📖 Tutorial", command=self.show_tutorial_screen)
-        btn_tutorial.grid(row=2, column=1, pady=10, padx=10)
+        btn_tutorial = ctk.CTkButton(self.main_frame, text="📖 Tutorial", font=("Arial", 28, "bold"), command=self.show_tutorial_screen)
+        btn_tutorial.grid(row=2, column=0, pady=10, padx=10, sticky="nsew")
 
-        btn_exit = ctk.CTkButton(self.main_frame, text="❌ Exit", command=self.root.quit,
-                                 font=("Arial", 24), fg_color="#f44336", width=200)
-        btn_exit.grid(row=3, column=1, pady=10)
+        btn_exit = ctk.CTkButton(self.main_frame, text="❌ Exit", command=self.show_welcome_screen,
+                                font=("Arial", 24), fg_color="#f44336", width=200)
+        btn_exit.grid(row=3, column=0, pady=10, sticky="nsew")
+
+        # Make rows expand equally for better vertical alignment
+        self.main_frame.rowconfigure(0, weight=1)
+        self.main_frame.rowconfigure(1, weight=1)
+        self.main_frame.rowconfigure(2, weight=1)
+        self.main_frame.rowconfigure(3, weight=1)
+
 
     def start_game(self):
         """ ซ่อนหน้า Welcome แล้วแสดงหน้าเกม """
