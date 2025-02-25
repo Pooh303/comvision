@@ -16,10 +16,9 @@ class SignLanguageController:
 
     def start_video_capture_tutorial(self):
         """ เริ่มต้นเปิดกล้อง """
-        self.cap = cv2.VideoCapture()
+        self.cap = cv2.VideoCapture(0)
         self.update_frame_tutorial()
 
-    
 
     def update_frame_tutorial(self):
         if self.cap is None:
