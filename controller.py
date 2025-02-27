@@ -5,7 +5,7 @@ from view import SignLanguageView
 import customtkinter as ctk
 import cv2
 import mediapipe as mp
-
+from PIL import Image, ImageTk
 class SignLanguageController:
     def __init__(self):
         self.model = SignLanguageModel()
@@ -13,13 +13,13 @@ class SignLanguageController:
         self.root = ctk.CTk()
         self.view = SignLanguageView(self.root, self)
         self.cap = None
+        self.cap2 = None
 
     def start_video_capture_tutorial(self):
         """ เริ่มต้นเปิดกล้อง """
         self.cap = cv2.VideoCapture(0)
         self.update_frame_tutorial()
 
-    
 
     def update_frame_tutorial(self):
         if self.cap is None:
@@ -34,11 +34,10 @@ class SignLanguageController:
 
         # เรียกใช้ฟังก์ชัน predict_and_draw จากโมเดล
         # สมมติว่า self.model เป็น instance ของ SignLanguageModel2
-        frame = self.model2.predict_and_draw(frame_rgb)
+        frame, confirmed_prediction = self.model2.predict_and_draw(frame_rgb)
 
         # อัปเดตเฟรมใน UI (ในที่นี้ใช้ self.view.update_tutorial_frame)
-        self.view.update_tutorial_frame(frame)
-
+        self.view.update_tutorial_frame(frame, confirmed_prediction)
         # เรียกฟังก์ชันซ้ำหลัง 10 มิลลิวินาที
         self.view.video_frame.after(10, self.update_frame_tutorial)
 
@@ -83,6 +82,49 @@ class SignLanguageController:
 
         self.view.lbl_video.after(10, self.update_frame)
 
+    def start_video_example(self, name):
+        """เปิดวิดีโอจากพาธที่กำหนด"""
+        video_path = f"vids/{name}.mp4"
+
+    # ปิด VideoCapture ตัวเก่าถ้ามี
+        if hasattr(self, "cap2") and self.cap2 is not None:
+            self.cap2.release()
+            self.cap2 = None
+
+        # เปิดวิดีโอใหม่
+        self.cap2 = cv2.VideoCapture(video_path)
+
+        if not self.cap2.isOpened():
+            print(f"Error: ไม่สามารถเปิดไฟล์ {video_path} ได้")
+            return
+
+        self.update_frame_example()
+
+    def update_frame_example(self):
+        """อัปเดตเฟรมจากวิดีโอไปยัง CTkLabel"""
+        if self.cap2 is None:
+            return
+        
+        ret, frame = self.cap2.read()
+        if ret:
+            # แปลง BGR เป็น RGB
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+            # อัปเดตใน View
+            self.view.update_viedo_example(frame)
+
+            # เรียกตัวเองใหม่เพื่ออัปเดตเฟรมถัดไป
+            self.view.video_frame2.after(120, self.update_frame_example)
+        else:
+            self.cap2.release()
+            self.cap2 = None  # เคลียร์ค่าหลังจากเล่นจบ
+
+
+
+    def on_letter_selected(self, event):
+        selected_letter = event.widget.get()
+        print(f"Selected letter: {selected_letter}")
+        # ประมวลผลตามที่ต้องการหลังจากเลือก letter
     def run(self):
         self.view.start()
         if self.cap:
