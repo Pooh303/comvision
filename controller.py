@@ -101,23 +101,52 @@ class SignLanguageController:
         self.update_frame_example()
 
     def update_frame_example(self):
-        """อัปเดตเฟรมจากวิดีโอไปยัง CTkLabel"""
+        """อัปเดตเฟรมจากวิดีโอไปยัง CTkLabel โดยรักษาอัตราส่วนภาพ"""
         if self.cap2 is None:
             return
-        
+
         ret, frame = self.cap2.read()
         if ret:
             # แปลง BGR เป็น RGB
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-            # อัปเดตใน View
-            self.view.update_viedo_example(frame)
+            # ดึงขนาดของ video_frame2
+            frame_width = self.view.video_frame2.winfo_width()
+            frame_height = self.view.video_frame2.winfo_height()
+
+            # ป้องกันปัญหาขนาดเป็น 0
+            if frame_width == 1 or frame_height == 1:
+                self.view.video_frame2.after(10, self.update_frame_example)
+                return
+
+            # คำนวณขนาดใหม่ให้พอดีกับกรอบ โดยรักษาอัตราส่วนเดิม
+            h, w, _ = frame.shape
+            aspect_ratio = w / h
+
+            if frame_width / frame_height > aspect_ratio:
+                new_height = frame_height
+                new_width = int(frame_height * aspect_ratio)
+            else:
+                new_width = frame_width
+                new_height = int(frame_width / aspect_ratio)
+
+            # Resize ภาพให้พอดีโดยไม่บิดเบี้ยว
+            frame_resized = cv2.resize(frame, (new_width, new_height), interpolation=cv2.INTER_AREA)
+
+            # แปลงภาพให้เป็นรูปแบบที่ใช้กับ CTkLabel
+            image = Image.fromarray(frame_resized)
+            imgtk = ImageTk.PhotoImage(image=image)
+
+            # อัปเดตภาพใน video_frame2
+            self.view.video_frame2.configure(image=imgtk)
+            self.view.video_frame2.image = imgtk  # ต้องเก็บ reference ไม่ให้ garbage collector ลบ
 
             # เรียกตัวเองใหม่เพื่ออัปเดตเฟรมถัดไป
-            self.view.video_frame2.after(120, self.update_frame_example)
+            self.view.video_frame2.after(33, self.update_frame_example)  # ประมาณ 30 FPS
         else:
             self.cap2.release()
             self.cap2 = None  # เคลียร์ค่าหลังจากเล่นจบ
+
 
 
 
