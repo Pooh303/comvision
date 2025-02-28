@@ -3,13 +3,15 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import time
+import string
 
 class SignLanguageModel2:
     def __init__(self, model_path='./model.p'):
         # โหลดโมเดล
         model_dict = pickle.load(open(model_path, 'rb'))
         self.model = model_dict['model']
-        self.labels_dict = {0: 'A', 1: 'B', 2:'L', 3:'C'}
+        letters = string.ascii_uppercase.replace('J', '').replace('Z', '')
+        self.labels_dict = {i: letter for i, letter in enumerate(letters)}
 
         # ตั้งค่า Mediapipe
         self.mp_hands = mp.solutions.hands
@@ -19,6 +21,8 @@ class SignLanguageModel2:
         self.last_prediction = None
         self.last_prediction_time = 0
         self.confirmed_prediction = None
+
+
     def predict_and_draw(self, frame):
         """ พยากรณ์และวาดผลลัพธ์ลงบน frame """
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -72,7 +76,7 @@ class SignLanguageModel2:
         """ ตรวจสอบค่าพยากรณ์และยืนยันผลเมื่อเงื่อนไขครบ """
         current_time = time.time()
 
-        if confidence_score > 0.80:  # ค่าความแม่นยำต้องเกิน 80%
+        if confidence_score > 0.70:  # ค่าความแม่นยำต้องเกิน 80%
             if predicted_character == self.last_prediction:
                 if current_time - self.last_prediction_time >= 3:  # ต้องค้างไว้นาน 3 วิ
                     self.confirmed_prediction = predicted_character

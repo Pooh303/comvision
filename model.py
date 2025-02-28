@@ -10,6 +10,7 @@ import nltk
 from nltk.corpus import words as nltk_words
 from nltk.corpus import brown
 import os
+import playsound
 
 # ตรวจสอบว่ามีไฟล์คำศัพท์ของ NLTK หรือไม่ ถ้าไม่มีให้ดาวน์โหลด
 try:
@@ -31,7 +32,14 @@ class SignLanguageModel:
         """
         model_dict = pickle.load(open(model_path, 'rb'))
         self.model = model_dict['model']
-        self.labels_dict = {i: letter for i, letter in enumerate(string.ascii_uppercase)}
+        '''
+        {0: 'A', 1: 'B', 2: 'C', 3: 'D', 4: 'E', 5: 'F', 6: 'G', 7: 'H', 8: 'I', 9: 'K', 10: 'L',
+          11: 'M', 12: 'N', 13: 'O', 14: 'P', 15: 'Q', 16: 'R', 17: 'S', 18: 'T', 19: 'U', 20: 'V',
+            21: 'W', 22: 'X', 23: 'Y'}
+        '''
+        letters = string.ascii_uppercase.replace('J', '').replace('Z', '')
+        self.labels_dict = {i: letter for i, letter in enumerate(letters)}
+        
         self.words_file = words_file
         self.words = self.load_words(max_word_length, use_brown)  # โหลดหรือสร้างคำศัพท์
 
@@ -39,7 +47,7 @@ class SignLanguageModel:
         self.typed_word = ""
         self.start_time = time.time()
         self.elapsed_time = 0
-        self.time_limit = 3
+        self.time_limit = 10
         self.score = 0
         self.last_character = None
         self.frame_counter = 0
@@ -49,6 +57,7 @@ class SignLanguageModel:
         self.mp_drawing = mp.solutions.drawing_utils
         self.mp_drawing_styles = mp.solutions.drawing_styles
         self.hands = self.mp_hands.Hands(static_image_mode=False, min_detection_confidence=0.7, min_tracking_confidence=0.5)
+
 
     def generate_lba_words(self, max_length, use_brown_corpus=False):
         """
@@ -144,6 +153,7 @@ class SignLanguageModel:
             if self.elapsed_time <= self.time_limit:
                 self.score += 1
             self.reset_word()
+            playsound.playsound("assets/sound/CorrectSound.mp3", block=False)
             return True, self.elapsed_time
         return False, 0
 

@@ -68,7 +68,7 @@ class SignLanguageView:
         # สร้าง back_button
         back_button = ctk.CTkButton(
             content_frame, text="⬅️Back", command=self.show_welcome_screen,
-            font = self.get_font(25, "bold"),
+            font = self.get_font(20, "bold"),
             fg_color="#ff5722", width=100, height=40
         )
         back_button.grid(row=3, column=0, columnspan=2, pady=20)
