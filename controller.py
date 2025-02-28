@@ -6,6 +6,7 @@ import customtkinter as ctk
 import cv2
 import mediapipe as mp
 from PIL import Image, ImageTk
+
 class SignLanguageController:
     def __init__(self):
         self.model = SignLanguageModel()
