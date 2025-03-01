@@ -143,7 +143,7 @@ class SignLanguageController:
             self.view.video_frame2.image = imgtk  # ต้องเก็บ reference ไม่ให้ garbage collector ลบ
 
             # เรียกตัวเองใหม่เพื่ออัปเดตเฟรมถัดไป
-            self.view.video_frame2.after(33, self.update_frame_example)  # ประมาณ 30 FPS
+            self.view.video_frame2.after(120, self.update_frame_example)  # ประมาณ 30 FPS
         else:
             self.cap2.release()
             self.cap2 = None  # เคลียร์ค่าหลังจากเล่นจบ
