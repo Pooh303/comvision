@@ -147,14 +147,7 @@ class SignLanguageController:
         else:
             self.cap2.release()
             self.cap2 = None  # เคลียร์ค่าหลังจากเล่นจบ
-
-
-
-
-    def on_letter_selected(self, event):
-        selected_letter = event.widget.get()
-        print(f"Selected letter: {selected_letter}")
-        # ประมวลผลตามที่ต้องการหลังจากเลือก letter
+    
     def run(self):
         self.view.start()
         if self.cap:
