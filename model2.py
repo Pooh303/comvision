@@ -15,7 +15,7 @@ class SignLanguageModel2:
         self.mp_hands = mp.solutions.hands
         self.mp_drawing = mp.solutions.drawing_utils
         self.mp_drawing_styles = mp.solutions.drawing_styles
-        self.hands = self.mp_hands.Hands(static_image_mode=False, min_detection_confidence=0.3)
+        self.hands = self.mp_hands.Hands(static_image_mode=False, min_detection_confidence=0.7)
         self.last_prediction = None
         self.last_prediction_time = 0
         self.confirmed_prediction = None
