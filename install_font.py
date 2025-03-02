@@ -92,6 +92,4 @@ def install_fonts_from_folder(folder_path):
         print("Failed to refresh font cache.")
     else:
         print("Font cache refreshed.")
-
-
-install_fonts_from_folder("assets/fonts/Quicksand")
+        
