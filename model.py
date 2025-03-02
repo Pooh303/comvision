@@ -54,7 +54,7 @@ class SignLanguageModel:
         self.frame_counter = 0
         self.typing_delay = 15
 
-        # ตั้งค่า MediaPipe (แบบง่าย)
+        # ตั้งค่า MediaPipe
         self.mp_hands = mp.solutions.hands
         self.mp_drawing = mp.solutions.drawing_utils
         self.mp_drawing_styles = mp.solutions.drawing_styles
@@ -177,7 +177,7 @@ class SignLanguageModel:
         Returns:
             bool: True ถ้าอักษรถูกต้องและถูกเพิ่ม, False ถ้าไม่.
         """
-        if predicted_character and confidence_score > 0.5:  # เกณฑ์ความเชื่อมั่น
+        if predicted_character and confidence_score > 0.45:  # เกณฑ์ความเชื่อมั่น
             if len(self.typed_word) < len(self.current_word) and predicted_character == self.current_word[len(self.typed_word)]:
                 if predicted_character != self.last_character:
                     self.frame_counter = 0

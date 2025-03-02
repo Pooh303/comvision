@@ -3,14 +3,16 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import time
-import string
+# import string
 
 class SignLanguageModel2:
     def __init__(self, model_path='./model_best.p'):
         # โหลดโมเดล
         model_dict = pickle.load(open(model_path, 'rb'))
         self.model = model_dict['model']
-        self.labels_dict = {0: 'A', 1: 'B', 2: 'C', 3: 'D', 4: 'E', 5: 'F', 6: 'G', 7: 'H', 8: 'I', 9: 'K', 10: 'L', 11: 'M', 12: 'N', 13: 'O', 14: 'P', 15: 'Q', 16: 'R', 17: 'S', 18: 'T', 19: 'U', 20: 'V', 21: 'W', 22: 'X', 23: 'Y'}
+        self.labels_dict = {0: 'A', 1: 'B', 2: 'C', 3: 'D', 4: 'E', 5: 'F', 6: 'G', 7: 'H', 8: 'I', 9: 'K', 10: 'L',
+                             11: 'M', 12: 'N', 13: 'O', 14: 'P', 15: 'Q', 16: 'R', 17: 'S', 18: 'T', 19: 'U', 20: 'V',
+                               21: 'W', 22: 'X', 23: 'Y'}
         # ตั้งค่า Mediapipe
         self.mp_hands = mp.solutions.hands
         self.mp_drawing = mp.solutions.drawing_utils
@@ -19,6 +21,7 @@ class SignLanguageModel2:
         self.last_prediction = None
         self.last_prediction_time = 0
         self.confirmed_prediction = None
+
 
     def predict_and_draw(self, frame):
         """
@@ -79,8 +82,6 @@ class SignLanguageModel2:
                     1.3, (0, 0, 0), 3, cv2.LINE_AA)
 
 
-           
-
             self.update_prediction(predicted_character, predicted_proba)
 
                 # แสดงอักษรที่พยากรณ์ได้
@@ -92,6 +93,7 @@ class SignLanguageModel2:
                             (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 1.3, (0, 255, 0), 3, cv2.LINE_AA)
 
         return frame, self.confirmed_prediction
+
 
     def update_prediction(self, predicted_character, confidence_score):
         """
